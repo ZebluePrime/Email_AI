@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  email-worker:
+    build: .
+    container_name: ai_email_triage
+    restart: unless-stopped
+    env_file:
+      - .env
+    # Notice: No 'ports:' section! 
+    # This keeps the container completely sealed off from the outside web.

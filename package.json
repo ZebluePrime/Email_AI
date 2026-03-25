@@ -1,0 +1,15 @@
+{
+  "name": "ai-email-triage",
+  "version": "1.0.0",
+  "description": "AI Email Triage Worker",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@google/genai": "latest",
+    "dotenv": "^16.4.5",
+    "express": "latest",
+    "googleapis": "^144.0.0"
+  }
+}
