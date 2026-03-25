@@ -4,21 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Email Triage</title>
-    <style>
-        body { font-family: system-ui, sans-serif; background: #f4f4f5; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { margin-top: 0; }
-        .queue-item { border: 1px solid #e4e4e7; padding: 15px; margin-bottom: 10px; border-radius: 6px; }
-        .btn-approve { background: #22c55e; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-        .btn-dismiss { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <h1>Inbox Triage Queue</h1>
-        <div id="queue-container">
-            <p>Waiting for AI to process emails...</p>
+<body class="bg-gray-100 p-8 font-sans">
+    <div class="max-w-3xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Inbox Triage Queue</h1>
+        <div id="queue" class="space-y-4">
+            <p class="text-gray-500">Loading queue...</p>
         </div>
     </div>
+
+    <script>
+        // Fetches the data from your Node server
+        async function fetchQueue() {
+            const res = await fetch('/api/queue');
+            const queue = await res.json();
+            const container = document.getElementById('queue');
+
+            if (queue.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 bg-white p-6 rounded-lg shadow-sm">No emails waiting. Your inbox is clean!</p>';
+                return;
+            }
+
+            // Builds a card for each email
+            container.innerHTML = queue.map(item => `
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 ${item.category === 'Urgent Action' ? 'border-red-500' : 'border-blue-500'}" id="item-${item.id}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-xl font-semibold">${item.subject}</h2>
+                            <p class="text-sm text-gray-600">From: ${item.from}</p>
+                        </div>
+                        <span class="px-3 py-1 text-sm font-bold rounded-full ${item.category === 'Urgent Action' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}">
+                            ${item.category}
+                        </span>
+                    </div>
+                    <p class="text-gray-700 mb-4 bg-gray-50 p-3 rounded">${item.summary}</p>
+                    <div class="mb-5">
+                        <h3 class="font-semibold text-xs text-gray-500 uppercase tracking-wider mb-2">Extracted Tasks:</h3>
+                        <ul class="list-disc pl-5 text-gray-800 space-y-1">
+                            ${item.tasks.map(task => `<li>${task}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button onclick="handleAction('${item.id}', 'approve')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition font-medium shadow-sm">
+                            Approve & To-Do
+                        </button>
+                        <button onclick="handleAction('${item.id}', 'dismiss')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded transition font-medium shadow-sm">
+                            Dismiss
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Handles the button clicks
+        async function handleAction(id, action) {
+            // Instantly hide the card from the UI for a snappy feel
+            document.getElementById(`item-${id}`).style.display = 'none';
+            
+            // Tell the server to process the action
+            await fetch('/api/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, action })
+            });
+            fetchQueue();
+        }
+
+        // Load immediately, then refresh the screen every 10 seconds
+        fetchQueue();
+        setInterval(fetchQueue, 10000);
+    </script>
 </body>
 </html>

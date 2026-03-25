@@ -90,6 +90,23 @@ app.get('/api/queue', (req, res) => {
     res.json(triageQueue);
 });
 
+// API Endpoint: Handle button clicks from the dashboard
+app.post('/api/action', (req, res) => {
+    const { id, action } = req.body;
+    
+    // Remove the item from the memory queue
+    triageQueue = triageQueue.filter(item => item.id !== id);
+    
+    if (action === 'approve') {
+        console.log(`✅ Approved tasks for email ${id}. (API integration pending)`);
+        // We will add the code here later to push this to your actual To-Do list
+    } else {
+        console.log(`🗑️ Dismissed email ${id}`);
+    }
+    
+    res.json({ success: true });
+});
+
 // Start the server and the background polling
 app.listen(PORT, () => {
     console.log(`🚀 AI Triage Dashboard running on port ${PORT}`);
